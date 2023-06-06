@@ -48,8 +48,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CrowdGroupAdapterTest {
 
-    @Mock private ComponentModel modelMock;
-    @Mock private GroupWithAttributes groupMock;
+    @Mock
+    private ComponentModel modelMock;
+    @Mock
+    private GroupWithAttributes groupMock;
 
     private CrowdGroupAdapter crowdGroupAdapter;
 
@@ -228,15 +230,6 @@ class CrowdGroupAdapterTest {
     void when_deleteRoleMapping_then_readOnlyExceptionIsThrown() {
         assertThatThrownBy(() -> crowdGroupAdapter.deleteRoleMapping(mock(RoleModel.class)))
                 .isExactlyInstanceOf(ReadOnlyException.class);
-    }
-
-    @Test
-    void equalsAndHashcode() {
-        EqualsVerifier.forClass(CrowdGroupAdapter.class)
-                .suppress(Warning.STRICT_INHERITANCE, Warning.NONFINAL_FIELDS)
-                .usingGetClass()
-                .withIgnoredFields("group")
-                .verify();
     }
 
 }

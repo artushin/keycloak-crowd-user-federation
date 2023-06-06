@@ -41,7 +41,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A mapper used to resolve a user's groups, retrieving them, as well as their respective parents and children.
+ * A mapper used to resolve a user's groups, retrieving them, as well as their
+ * respective parents and children.
  *
  * @author Sam Schmit
  * @since 1.0.0
@@ -56,7 +57,7 @@ public class CrowdGroupMapper {
     /**
      * Create's a new instance of this mapper.
      *
-     * @param model this provider's component model
+     * @param model  this provider's component model
      * @param client the crowd rest client
      */
     public CrowdGroupMapper(ComponentModel model, CrowdClient client) {
@@ -65,7 +66,8 @@ public class CrowdGroupMapper {
     }
 
     /**
-     * Retrieves the provided user's groups and resolves their respective parents and children.
+     * Retrieves the provided user's groups and resolves their respective parents
+     * and children.
      *
      * @param user The user for which to resolve groups
      * @return The provided user with it's groups set
@@ -83,8 +85,8 @@ public class CrowdGroupMapper {
             user.setGroupsInternal(userGroups);
 
             return user;
-        } catch (OperationFailedException | InvalidAuthenticationException |
-                ApplicationPermissionException | UserNotFoundException e) {
+        } catch (OperationFailedException | InvalidAuthenticationException | ApplicationPermissionException
+                | UserNotFoundException e) {
             logger.error(e);
             throw new ModelException(e);
         }
@@ -96,9 +98,9 @@ public class CrowdGroupMapper {
                     .stream()
                     .map(group -> new CrowdGroupAdapter(model, (GroupWithAttributes) group))
                     .peek(this::loadParent)
-                    .forEach(groupAdapter::setParent);
-        } catch (OperationFailedException | InvalidAuthenticationException |
-                ApplicationPermissionException | GroupNotFoundException e) {
+                    .forEach(groupAdapter::addChild);
+        } catch (OperationFailedException | InvalidAuthenticationException | ApplicationPermissionException
+                | GroupNotFoundException e) {
             logger.error(e);
             throw new ModelException(e);
         }
@@ -110,8 +112,8 @@ public class CrowdGroupMapper {
                     .map(group -> new CrowdGroupAdapter(model, (GroupWithAttributes) group))
                     .peek(this::loadSubGroups)
                     .forEach(groupAdapter::addChild);
-        } catch (OperationFailedException | InvalidAuthenticationException |
-                ApplicationPermissionException | GroupNotFoundException e) {
+        } catch (OperationFailedException | InvalidAuthenticationException | ApplicationPermissionException
+                | GroupNotFoundException e) {
             logger.error(e);
             throw new ModelException(e);
         }
