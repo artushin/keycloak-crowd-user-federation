@@ -57,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.atlassian.crowd.search.query.entity.restriction.BooleanRestriction.BooleanLogic.OR;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,13 +71,17 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CrowdStorageProviderTest {
 
-    @Mock private KeycloakSession sessionMock;
-    @Mock private ComponentModel modelMock;
-    @Mock private CrowdClient clientMock;
+    @Mock
+    private KeycloakSession sessionMock;
+    @Mock
+    private ComponentModel modelMock;
+    @Mock
+    private CrowdClient clientMock;
 
     private CrowdStorageProvider crowdStorageProvider;
 
-    @Mock private RealmModel realmModelMock;
+    @Mock
+    private RealmModel realmModelMock;
     private static final String USERNAME = "username";
 
     @BeforeEach
@@ -91,7 +96,7 @@ class CrowdStorageProviderTest {
         UserWithAttributes crowdUserMock = mock(UserWithAttributes.class);
         when(clientMock.getUserWithAttributes(USERNAME)).thenReturn(crowdUserMock);
 
-        assertThat(crowdStorageProvider.getUserByUsername(USERNAME, realmModelMock))
+        assertThat(crowdStorageProvider.getUserByUsername(realmModelMock, USERNAME))
                 .isExactlyInstanceOf(CrowdUserAdapter.class)
                 .extracting("entity")
                 .isEqualTo(crowdUserMock);
@@ -101,28 +106,31 @@ class CrowdStorageProviderTest {
     void given_getUserWithAttributesThrowsUserNotFoundException_when_getUserByUsername_then_nullIsReturned() throws Exception {
         when(clientMock.getUserWithAttributes(USERNAME)).thenThrow(new UserNotFoundException("Boom!"));
 
-        assertThat(crowdStorageProvider.getUserByUsername(USERNAME, realmModelMock)).isNull();
+        assertThat(crowdStorageProvider.getUserByUsername(realmModelMock, USERNAME)).isNull();
     }
 
     @Test
-    void given_getUserWithAttributesThrowsOperationFailedException_when_getUserByUsername_then_exceptionIsThrown() throws Exception {
+    void given_getUserWithAttributesThrowsOperationFailedException_when_getUserByUsername_then_exceptionIsThrown()
+            throws Exception {
         runGetUserByUsernameExceptionTest(new OperationFailedException());
     }
 
     @Test
-    void given_getUserWithAttributesThrowsInvalidAuthenticationException_when_getUserByUsername_then_exceptionIsThrown() throws Exception {
+    void given_getUserWithAttributesThrowsInvalidAuthenticationException_when_getUserByUsername_then_exceptionIsThrown()
+            throws Exception {
         runGetUserByUsernameExceptionTest(new InvalidAuthenticationException("Boom!"));
     }
 
     @Test
-    void given_getUserWithAttributesThrowsApplicationPermissionException_when_getUserByUsername_then_exceptionIsThrown() throws Exception {
+    void given_getUserWithAttributesThrowsApplicationPermissionException_when_getUserByUsername_then_exceptionIsThrown()
+            throws Exception {
         runGetUserByUsernameExceptionTest(new ApplicationPermissionException());
     }
 
     private void runGetUserByUsernameExceptionTest(Exception exception) throws Exception {
         when(clientMock.getUserWithAttributes(USERNAME)).thenThrow(exception);
 
-        assertThatThrownBy(() -> crowdStorageProvider.getUserByUsername(USERNAME, realmModelMock))
+        assertThatThrownBy(() -> crowdStorageProvider.getUserByUsername(realmModelMock, USERNAME))
                 .isExactlyInstanceOf(ModelException.class)
                 .hasCause(exception);
     }
@@ -132,19 +140,19 @@ class CrowdStorageProviderTest {
         UserWithAttributes crowdUserMock = mock(UserWithAttributes.class);
         when(clientMock.getUserWithAttributes(USERNAME)).thenReturn(crowdUserMock);
 
-        crowdStorageProvider.getUserById("f:42:" + USERNAME, realmModelMock);
+        crowdStorageProvider.getUserById(realmModelMock, "f:42:" + USERNAME);
 
-        verify(crowdStorageProvider).getUserByUsername(USERNAME, realmModelMock);
+        verify(crowdStorageProvider).getUserByUsername(realmModelMock, USERNAME);
     }
 
     @Test
     void when_getUserByEmail_then_searchForUserIsCalled() {
-        crowdStorageProvider.getUserByEmail("email", realmModelMock);
+        crowdStorageProvider.getUserByEmail(realmModelMock, "email");
 
         Map<String, String> params = new HashMap<>();
         params.put("email", "email");
 
-        verify(crowdStorageProvider).searchForUser(params, realmModelMock, 0, 1);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, params, 0, 1);
     }
 
     // UserQueryProvider methods
@@ -155,18 +163,21 @@ class CrowdStorageProviderTest {
         expectedResult.add("user1");
         expectedResult.add("user2");
 
-        when(clientMock.searchUserNames(CrowdStorageProvider.NOOP_SEARCH_RESTRICTION, 0, Integer.MAX_VALUE)).thenReturn(expectedResult);
+        when(clientMock.searchUserNames(CrowdStorageProvider.NOOP_SEARCH_RESTRICTION, 0, Integer.MAX_VALUE))
+                .thenReturn(expectedResult);
 
         assertThat(crowdStorageProvider.getUsersCount(realmModelMock)).isEqualTo(2);
     }
 
     @Test
-    void given_searchUserNamesThrowsOperationFailedException_when_getUsersCount_then_ExceptionsIsThrown() throws Exception {
+    void given_searchUserNamesThrowsOperationFailedException_when_getUsersCount_then_ExceptionsIsThrown()
+            throws Exception {
         runGetUsersCountExceptionTest(new OperationFailedException());
     }
 
     @Test
-    void given_searchUserNamesThrowsInvalidAuthenticationException_when_getUsersCount_then_ExceptionsIsThrown() throws Exception {
+    void given_searchUserNamesThrowsInvalidAuthenticationException_when_getUsersCount_then_ExceptionsIsThrown()
+            throws Exception {
         runGetUsersCountExceptionTest(new InvalidAuthenticationException("Boom!"));
     }
 
@@ -185,28 +196,28 @@ class CrowdStorageProviderTest {
 
     @Test
     void when_getUsersWithoutLimits_then_getUsersWithLimitsIsCalled() {
-        crowdStorageProvider.getUsers(realmModelMock);
+        crowdStorageProvider.getUsersStream(realmModelMock);
 
-        verify(crowdStorageProvider).getUsers(realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).getUsersStream(realmModelMock, 0, Integer.MAX_VALUE);
     }
 
     @Test
     void when_getUsersWithLimits_then_searchForUsersIsCalled() {
-        crowdStorageProvider.getUsers(realmModelMock, 0, Integer.MAX_VALUE);
+        crowdStorageProvider.getUsersStream(realmModelMock, 0, Integer.MAX_VALUE);
 
-        verify(crowdStorageProvider).searchForUser("", realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, "", 0, Integer.MAX_VALUE);
     }
 
     @Test
     void when_searchForUserWithoutLimits_then_searchForUserWithLimitsIsCalled() {
-        crowdStorageProvider.searchForUser("search", realmModelMock);
+        crowdStorageProvider.searchForUserStream(realmModelMock, "search");
 
-        verify(crowdStorageProvider).searchForUser("search", realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, "search", 0, Integer.MAX_VALUE);
     }
 
     @Test
     void when_searchForUserWithString_then_searchForUserWithParamsIsCalled() {
-        crowdStorageProvider.searchForUser("search", realmModelMock, 0, Integer.MAX_VALUE);
+        crowdStorageProvider.searchForUserStream(realmModelMock, "search", 0, Integer.MAX_VALUE);
 
         Map<String, String> params = new HashMap<>();
         params.put("first", "search");
@@ -214,17 +225,18 @@ class CrowdStorageProviderTest {
         params.put("email", "search");
         params.put("username", "search");
 
-        verify(crowdStorageProvider).searchForUser(params, realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, params, 0, Integer.MAX_VALUE);
     }
 
     @Test
     void when_searchForUserWithParamsAndNoLimits_then_searchForUserWithParamsAndLimitsIsCalled() {
-        crowdStorageProvider.searchForUser(new HashMap<>(), realmModelMock);
+        crowdStorageProvider.searchForUserStream(realmModelMock, new HashMap<>());
 
-        verify(crowdStorageProvider).searchForUser(new HashMap<>(), realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, new HashMap<>(), 0, Integer.MAX_VALUE);
     }
 
-    // TODO searchForUser(Map<String, String> params, RealmModel realm, int firstResult, int maxResults)
+    // TODO searchForUser(Map<String, String> params, RealmModel realm, int
+    // firstResult, int maxResults)
 
     @Test
     void given_emptyParamsMap_when_searchForUser_then_expectedValuesAreReturned() throws Exception {
@@ -236,7 +248,7 @@ class CrowdStorageProviderTest {
         when(clientMock.searchUsersWithAttributes(CrowdStorageProvider.NOOP_SEARCH_RESTRICTION, 0, Integer.MAX_VALUE))
                 .thenReturn(users);
 
-        assertThat(crowdStorageProvider.searchForUser(new HashMap<>(), realmModelMock, 0, Integer.MAX_VALUE))
+        assertThat(crowdStorageProvider.searchForUserStream(realmModelMock, new HashMap<>(), 0, Integer.MAX_VALUE))
                 .hasSize(1)
                 .element(0)
                 .extracting("entity")
@@ -268,7 +280,7 @@ class CrowdStorageProviderTest {
         when(clientMock.searchUsersWithAttributes(searchRestriction, 0, Integer.MAX_VALUE))
                 .thenReturn(users);
 
-        assertThat(crowdStorageProvider.searchForUser(params, realmModelMock, 0, Integer.MAX_VALUE))
+        assertThat(crowdStorageProvider.searchForUserStream(realmModelMock, params, 0, Integer.MAX_VALUE))
                 .hasSize(1)
                 .element(0)
                 .extracting("entity")
@@ -276,17 +288,20 @@ class CrowdStorageProviderTest {
     }
 
     @Test
-    void given_searchUsersWithAttributesThrowsInvalidAuthenticationException_when_searchForUser_then_ExceptionsIsThrown() throws Exception {
+    void given_searchUsersWithAttributesThrowsInvalidAuthenticationException_when_searchForUser_then_ExceptionsIsThrown()
+            throws Exception {
         runSearchForUserExceptionTest(new InvalidAuthenticationException("Boom!"));
     }
 
     @Test
-    void given_searchUsersWithAttributesThrowsOperationFailedException_when_searchForUser_then_ExceptionsIsThrown() throws Exception {
+    void given_searchUsersWithAttributesThrowsOperationFailedException_when_searchForUser_then_ExceptionsIsThrown()
+            throws Exception {
         runSearchForUserExceptionTest(new OperationFailedException());
     }
 
     @Test
-    void given_searchUsersWithAttributesThrowsApplicationPermissionException_when_searchForUser_then_ExceptionsIsThrown() throws Exception {
+    void given_searchUsersWithAttributesThrowsApplicationPermissionException_when_searchForUser_then_ExceptionsIsThrown()
+            throws Exception {
         runSearchForUserExceptionTest(new ApplicationPermissionException());
     }
 
@@ -294,28 +309,28 @@ class CrowdStorageProviderTest {
         when(clientMock.searchUsersWithAttributes(CrowdStorageProvider.NOOP_SEARCH_RESTRICTION, 0, Integer.MAX_VALUE))
                 .thenThrow(exception);
 
-        assertThatThrownBy(() -> crowdStorageProvider.searchForUser(
-                        new HashMap<>(), realmModelMock, 0, Integer.MAX_VALUE))
+        assertThatThrownBy(() -> crowdStorageProvider.searchForUserStream(
+                        realmModelMock, new HashMap<>(), 0, Integer.MAX_VALUE))
                 .isExactlyInstanceOf(ModelException.class)
                 .hasCause(exception);
     }
 
     @Test
     void when_searchForUserByUserAttribute_then_searchForUserIsCalled() {
-        crowdStorageProvider.searchForUserByUserAttribute("attr", "value", realmModelMock);
+        crowdStorageProvider.searchForUserByUserAttributeStream(realmModelMock, "attr", "value");
 
         Map<String, String> params = new HashMap<>();
         params.put("attr", "value");
 
-        verify(crowdStorageProvider).searchForUser(params, realmModelMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).searchForUserStream(realmModelMock, params, 0, Integer.MAX_VALUE);
     }
 
     @Test
     void when_getGroupMembers_then_getGroupMembersWithLimitsIsCalled() {
         GroupModel groupMock = mock(GroupModel.class);
-        crowdStorageProvider.getGroupMembers(realmModelMock, groupMock);
+        crowdStorageProvider.getGroupMembersStream(realmModelMock, groupMock);
 
-        verify(crowdStorageProvider).getGroupMembers(realmModelMock, groupMock, 0, Integer.MAX_VALUE);
+        verify(crowdStorageProvider).getGroupMembersStream(realmModelMock, groupMock, 0, Integer.MAX_VALUE);
     }
 
     @Test
@@ -328,9 +343,9 @@ class CrowdStorageProviderTest {
 
         when(clientMock.getUsersOfGroup("group name", 0, Integer.MAX_VALUE)).thenReturn(userList);
 
-        List<UserModel> groupMembers = crowdStorageProvider.getGroupMembers(
+        Stream<UserModel> groupMembers = crowdStorageProvider.getGroupMembersStream(
                 realmModelMock, groupMock, 0, Integer.MAX_VALUE);
-        assertThat(groupMembers.get(0)).extracting("entity").isEqualTo(userList.get(0));
+        assertThat(groupMembers.findFirst()).isEqualTo(userList.get(0));
     }
 
     @Test
@@ -341,22 +356,25 @@ class CrowdStorageProviderTest {
         when(clientMock.getUsersOfGroup("group name", 0, Integer.MAX_VALUE))
                 .thenThrow(new GroupNotFoundException("Boom!"));
 
-        assertThat(crowdStorageProvider.getGroupMembers(realmModelMock, groupMock, 0, Integer.MAX_VALUE))
+        assertThat(crowdStorageProvider.getGroupMembersStream(realmModelMock, groupMock, 0, Integer.MAX_VALUE))
                 .isEmpty();
     }
 
     @Test
-    void given_getUsersOfGroupThrowsApplicationPermissionException_when_getGroupMembersWithLimits_then_exceptionIsThrown() throws Exception {
+    void given_getUsersOfGroupThrowsApplicationPermissionException_when_getGroupMembersWithLimits_then_exceptionIsThrown()
+            throws Exception {
         runGetGroupMembersWithLimitsExceptionTest(new ApplicationPermissionException());
     }
 
     @Test
-    void given_getUsersOfGroupThrowsInvalidAuthenticationException_when_getGroupMembersWithLimits_then_exceptionIsThrown() throws Exception {
+    void given_getUsersOfGroupThrowsInvalidAuthenticationException_when_getGroupMembersWithLimits_then_exceptionIsThrown()
+            throws Exception {
         runGetGroupMembersWithLimitsExceptionTest(new InvalidAuthenticationException("Boom!"));
     }
 
     @Test
-    void given_getUsersOfGroupThrowsOperationFailedException_when_getGroupMembersWithLimits_then_exceptionIsThrown() throws Exception {
+    void given_getUsersOfGroupThrowsOperationFailedException_when_getGroupMembersWithLimits_then_exceptionIsThrown()
+            throws Exception {
         runGetGroupMembersWithLimitsExceptionTest(new OperationFailedException());
     }
 
@@ -366,7 +384,8 @@ class CrowdStorageProviderTest {
 
         when(clientMock.getUsersOfGroup("group name", 0, Integer.MAX_VALUE)).thenThrow(exception);
 
-        assertThatThrownBy(() -> crowdStorageProvider.getGroupMembers(realmModelMock, groupMock, 0, Integer.MAX_VALUE))
+        assertThatThrownBy(
+                () -> crowdStorageProvider.getGroupMembersStream(realmModelMock, groupMock, 0, Integer.MAX_VALUE))
                 .isExactlyInstanceOf(ModelException.class)
                 .hasCause(exception);
     }
@@ -446,12 +465,14 @@ class CrowdStorageProviderTest {
     }
 
     @Test
-    void given_authenticateUserThrowsApplicationPermissionException_when_isValid_then_exceptionIsThrown() throws Exception {
+    void given_authenticateUserThrowsApplicationPermissionException_when_isValid_then_exceptionIsThrown()
+            throws Exception {
         runAuthenticateUserExceptionTest(new ApplicationPermissionException());
     }
 
     @Test
-    void given_authenticateUserThrowsInvalidAuthenticationException_when_isValid_then_exceptionIsThrown() throws Exception {
+    void given_authenticateUserThrowsInvalidAuthenticationException_when_isValid_then_exceptionIsThrown()
+            throws Exception {
         runAuthenticateUserExceptionTest(new InvalidAuthenticationException("Boom!"));
     }
 
