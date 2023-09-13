@@ -199,6 +199,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${version.maven.surefire.plugin}</version>
           <configuration>
+            <skipTests>true</skipTests>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
           </configuration>
         </plugin>

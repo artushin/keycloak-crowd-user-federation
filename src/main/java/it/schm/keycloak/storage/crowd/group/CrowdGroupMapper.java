@@ -74,12 +74,9 @@ public class CrowdGroupMapper {
      */
     public CrowdUserAdapter onLoadUser(CrowdUserAdapter user) {
         try {
-            Set<GroupModel> userGroups = client.getGroupsForUser(user.getUsername(), 0, Integer.MAX_VALUE).stream()
+            Set<GroupModel> userGroups = client.getGroupsForNestedUser(user.getUsername(), 0, Integer.MAX_VALUE)
+                    .stream()
                     .map(group -> new CrowdGroupAdapter(model, (GroupWithAttributes) group))
-                    .peek(group -> {
-                        loadParent(group);
-                        loadSubGroups(group);
-                    })
                     .collect(Collectors.toSet());
 
             user.setGroupsInternal(userGroups);
@@ -91,32 +88,4 @@ public class CrowdGroupMapper {
             throw new ModelException(e);
         }
     }
-
-    private void loadParent(CrowdGroupAdapter groupAdapter) {
-        try {
-            client.getParentGroupsForGroup(StorageId.externalId(groupAdapter.getId()), 0, 1)
-                    .stream()
-                    .map(group -> new CrowdGroupAdapter(model, (GroupWithAttributes) group))
-                    .peek(this::loadParent)
-                    .forEach(groupAdapter::addChild);
-        } catch (OperationFailedException | InvalidAuthenticationException | ApplicationPermissionException
-                | GroupNotFoundException e) {
-            logger.error(e);
-            throw new ModelException(e);
-        }
-    }
-
-    private void loadSubGroups(CrowdGroupAdapter groupAdapter) {
-        try {
-            client.getChildGroupsOfGroup(StorageId.externalId(groupAdapter.getId()), 0, Integer.MAX_VALUE).stream()
-                    .map(group -> new CrowdGroupAdapter(model, (GroupWithAttributes) group))
-                    .peek(this::loadSubGroups)
-                    .forEach(groupAdapter::addChild);
-        } catch (OperationFailedException | InvalidAuthenticationException | ApplicationPermissionException
-                | GroupNotFoundException e) {
-            logger.error(e);
-            throw new ModelException(e);
-        }
-    }
-
 }
