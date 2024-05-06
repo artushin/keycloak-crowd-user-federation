@@ -36,6 +36,8 @@ import com.atlassian.crowd.search.query.entity.restriction.MatchMode;
 import com.atlassian.crowd.search.query.entity.restriction.PropertyImpl;
 import com.atlassian.crowd.search.query.entity.restriction.TermRestriction;
 import com.atlassian.crowd.service.client.CrowdClient;
+import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
+
 import it.schm.keycloak.storage.crowd.group.CrowdGroupMapper;
 import org.jboss.logging.Logger;
 import org.keycloak.component.ComponentModel;
