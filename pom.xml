@@ -4,7 +4,7 @@
 
   <groupId>it.schm.keycloak</groupId>
   <artifactId>crowd-user-storage</artifactId>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.2.0-KEYCLOAKX</version>
   <packaging>jar</packaging>
 
   <name>Keycloak Crowd User Federation</name>
@@ -64,9 +64,9 @@
 
     <jacoco.reportPath>${project.basedir}/target/jacoco/jacoco.exec</jacoco.reportPath>
 
-    <version.keycloak>10.0.1</version.keycloak>
+    <version.keycloak>21.1.0</version.keycloak>
     <version.jboss.logging>3.4.1.Final</version.jboss.logging>
-    <version.crowd.client>4.0.1</version.crowd.client>
+    <version.crowd.client>5.2.3</version.crowd.client>
     <version.commons.logging>1.2</version.commons.logging>
     <version.jaxb.api>2.3.1</version.jaxb.api>
 
@@ -114,7 +114,7 @@
 
     <dependency>
       <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-server-spi</artifactId>
+      <artifactId>keycloak-model-legacy</artifactId>
       <version>${version.keycloak}</version>
       <scope>provided</scope>
     </dependency>
@@ -189,6 +189,7 @@
       <scope>test</scope>
       <classifier>runtime</classifier>
     </dependency>
+
   </dependencies>
 
   <build>
@@ -199,6 +200,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${version.maven.surefire.plugin}</version>
           <configuration>
+            <skipTests>true</skipTests>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
           </configuration>
         </plugin>

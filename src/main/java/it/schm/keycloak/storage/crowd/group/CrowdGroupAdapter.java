@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -45,9 +46,12 @@ import static java.util.stream.Collectors.toMap;
  *
  * @author Sam Schmit
  * @since 1.0.0
- * @see <a href="https://www.keycloak.org/docs-api/9.0/javadocs/org/keycloak/models/GroupModel.html">org.keycloak.models.GroupModel</a>
- * @see <a href="https://www.keycloak.org/docs-api/9.0/javadocs/org/keycloak/models/RoleMapperModel.html">org.keycloak.models.RoleMapperModel</a>
- * @see <a href="https://docs.atlassian.com/atlassian-crowd/4.0.0/com/atlassian/crowd/model/group/GroupWithAttributes.html">com.atlassian.crowd.model.group.GroupWithAttributes</a>
+ * @see <a href=
+ *      "https://www.keycloak.org/docs-api/9.0/javadocs/org/keycloak/models/GroupModel.html">org.keycloak.models.GroupModel</a>
+ * @see <a href=
+ *      "https://www.keycloak.org/docs-api/9.0/javadocs/org/keycloak/models/RoleMapperModel.html">org.keycloak.models.RoleMapperModel</a>
+ * @see <a href=
+ *      "https://docs.atlassian.com/atlassian-crowd/4.0.0/com/atlassian/crowd/model/group/GroupWithAttributes.html">com.atlassian.crowd.model.group.GroupWithAttributes</a>
  */
 public class CrowdGroupAdapter implements GroupModel {
 
@@ -98,6 +102,10 @@ public class CrowdGroupAdapter implements GroupModel {
     }
 
     @Override
+    public Stream<String> getAttributeStream(String name) {
+        return getAttribute(name).stream();
+    }
+
     public List<String> getAttribute(String name) {
         Set<String> values = group.getValues(name);
 
@@ -120,8 +128,8 @@ public class CrowdGroupAdapter implements GroupModel {
     }
 
     @Override
-    public Set<GroupModel> getSubGroups() {
-        return subGroups;
+    public Stream<GroupModel> getSubGroupsStream() {
+        return subGroups.stream();
     }
 
     @Override
@@ -140,13 +148,13 @@ public class CrowdGroupAdapter implements GroupModel {
     }
 
     @Override
-    public Set<RoleModel> getRealmRoleMappings() {
-        return Collections.emptySet();
+    public Stream<RoleModel> getRealmRoleMappingsStream() {
+        return Stream.<RoleModel>empty();
     }
 
     @Override
-    public Set<RoleModel> getClientRoleMappings(ClientModel app) {
-        return Collections.emptySet();
+    public Stream<RoleModel> getClientRoleMappingsStream(ClientModel app) {
+        return Stream.<RoleModel>empty();
     }
 
     @Override
@@ -160,8 +168,8 @@ public class CrowdGroupAdapter implements GroupModel {
     }
 
     @Override
-    public Set<RoleModel> getRoleMappings() {
-        return Collections.emptySet();
+    public Stream<RoleModel> getRoleMappingsStream() {
+        return Stream.<RoleModel>empty();
     }
 
     @Override

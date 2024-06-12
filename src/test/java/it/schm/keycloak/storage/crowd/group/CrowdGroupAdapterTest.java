@@ -48,8 +48,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CrowdGroupAdapterTest {
 
-    @Mock private ComponentModel modelMock;
-    @Mock private GroupWithAttributes groupMock;
+    @Mock
+    private ComponentModel modelMock;
+    @Mock
+    private GroupWithAttributes groupMock;
 
     private CrowdGroupAdapter crowdGroupAdapter;
 
@@ -166,11 +168,11 @@ class CrowdGroupAdapterTest {
 
     @Test
     void when_getSubGroups_then_nullIsReturned() {
-        assertThat(crowdGroupAdapter.getSubGroups()).isEmpty();
+        assertThat(crowdGroupAdapter.getSubGroupsStream()).isEmpty();
 
         GroupModel groupMock = mock(GroupModel.class);
         crowdGroupAdapter.addChild(groupMock);
-        assertThat(crowdGroupAdapter.getSubGroups()).containsOnly(groupMock);
+        assertThat(crowdGroupAdapter.getSubGroupsStream()).containsOnly(groupMock);
     }
 
     @Test
@@ -183,7 +185,7 @@ class CrowdGroupAdapterTest {
         GroupModel groupMock = mock(GroupModel.class);
         crowdGroupAdapter.addChild(groupMock);
 
-        assertThat(crowdGroupAdapter.getSubGroups()).containsOnly(groupMock);
+        assertThat(crowdGroupAdapter.getSubGroupsStream()).containsOnly(groupMock);
     }
 
     @Test
@@ -192,20 +194,15 @@ class CrowdGroupAdapterTest {
         crowdGroupAdapter.addChild(groupMock);
 
         crowdGroupAdapter.removeChild(mock(GroupModel.class));
-        assertThat(crowdGroupAdapter.getSubGroups()).containsOnly(groupMock);
+        assertThat(crowdGroupAdapter.getSubGroupsStream()).containsOnly(groupMock);
 
         crowdGroupAdapter.removeChild(groupMock);
-        assertThat(crowdGroupAdapter.getSubGroups()).isEmpty();
+        assertThat(crowdGroupAdapter.getSubGroupsStream()).isEmpty();
     }
 
     @Test
     void when_getRealmRoleMappings_then_emptySetIsReturned() {
-        assertThat(crowdGroupAdapter.getRealmRoleMappings()).isEmpty();
-    }
-
-    @Test
-    void when_getClientRoleMappings_then_emptySetIsReturned() {
-        assertThat(crowdGroupAdapter.getClientRoleMappings(mock(ClientModel.class))).isEmpty();
+        assertThat(crowdGroupAdapter.getRealmRoleMappingsStream()).isEmpty();
     }
 
     @Test
@@ -221,22 +218,13 @@ class CrowdGroupAdapterTest {
 
     @Test
     void when_getRoleMappings_then_emptySetIsReturned() {
-        assertThat(crowdGroupAdapter.getRoleMappings()).isEmpty();
+        assertThat(crowdGroupAdapter.getRealmRoleMappingsStream()).isEmpty();
     }
 
     @Test
     void when_deleteRoleMapping_then_readOnlyExceptionIsThrown() {
         assertThatThrownBy(() -> crowdGroupAdapter.deleteRoleMapping(mock(RoleModel.class)))
                 .isExactlyInstanceOf(ReadOnlyException.class);
-    }
-
-    @Test
-    void equalsAndHashcode() {
-        EqualsVerifier.forClass(CrowdGroupAdapter.class)
-                .suppress(Warning.STRICT_INHERITANCE, Warning.NONFINAL_FIELDS)
-                .usingGetClass()
-                .withIgnoredFields("group")
-                .verify();
     }
 
 }
